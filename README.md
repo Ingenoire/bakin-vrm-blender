@@ -18,7 +18,7 @@ Works for both VRM 0.0 models and VRM 1.0 models.
 ![alt text](https://i.imgur.com/Y1BLewc.png)
 
 ### Installation
-- Download the repository as a ZIP file.
+- Download the latest release.
 - Open Blender, and under "Edit" -> "Preferences", select "Add-ons". Then go to "Install...", find your downloaded zip file. Make sure to tick the addon box for it to activate.
 - The addon is set to the left side. Drag the left side panel
 
