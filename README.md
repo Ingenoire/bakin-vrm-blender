@@ -2,10 +2,12 @@
 
 ![alt text](https://i.imgur.com/7P59bZx.png)
 
-A Blender Addon that allows you to quickly rig and export VRM models for use with RPG Developer Bakin with item hooks and other fixes.
+A Blender Addon that allows you to quickly rig and export VRM models for use with RPG Developer Bakin with item hooks, new shape keys, automatic material imports, and other fixes.
 Works for both VRM 0.0 models and VRM 1.0 models.
 
->**Please make sure that your VRM model is exported with only 2 materials (changed through VRoid Studio's export settings).**
+>⚠️ Please make sure that your VRM model is exported with only 2 materials (changed through VRoid Studio's export settings).
+>
+>⚠️ You might be prompted to save a blender project while exporting if one doesn't exist. Please save your project and then press Export again for it to work.
 
 ### Features
 - Simple and straightforward workflow: no need to touch anything Blender related if you don't want to!
@@ -14,6 +16,7 @@ Works for both VRM 0.0 models and VRM 1.0 models.
 - Generates a .DEF file through the built-in exporter to automatically import textures into the engine.
 - Adjusts the texture names to be easily sorted through in engine.
 - Removes VRM 1.0 icosphere.
+- Creates a new folder in the same directory as your blender project containing all the exported files.
 - Feel free to edit the source code to make any necessary tweaks.
 
 ![alt text](https://i.imgur.com/Y1BLewc.png)
@@ -21,7 +24,7 @@ Works for both VRM 0.0 models and VRM 1.0 models.
 ### Installation
 - Download the latest release.
 - Open Blender, and under "Edit" -> "Preferences", select "Add-ons". Then go to "Install...", find your downloaded zip file. Make sure to tick the addon box for it to activate.
-- The addon is set to the left side. Drag the left side panel
+- The addon is set to the left side. Extend the left side panel towards the right to reveal the button functions.
 
 ![Imgur](https://i.imgur.com/6eNARrZ.png)
 
