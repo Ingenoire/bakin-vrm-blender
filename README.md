@@ -14,6 +14,7 @@ Works for both VRM 0.0 models and VRM 1.0 models.
 - Generates a .DEF file through the built-in exporter to automatically import textures into the engine.
 - Adjusts the texture names to be easily sorted through in engine.
 - Removes VRM 1.0 icosphere.
+- Feel free to edit the source code to make any necessary tweaks.
 
 ![alt text](https://i.imgur.com/Y1BLewc.png)
 
