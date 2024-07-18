@@ -11,6 +11,12 @@ Works for both VRM 0.0 models and VRM 1.0 models.
 >⚠️ You'll need to save the current scene into a blend file before the export will work. Export generates a new folder in the same location as the blend file.
 >
 
+### V2B Update
+- Adds an Unrestricted Material Export mode.
+ - At the cost of having a ton of materials on a single model, and Bakin having LONG loading lag anytime an editor window loading the model occurs, it offers uncompressed textures on your models in game.
+ - Great for higher detailed clothing and body skin textures, and could be great to use for cutscenes.
+ - To use this, simply re-export your VRM from VRoid Studio, but this time, don't Reduce Materials (keep default).
+
 ### V2 Update
 ![alt text](https://i.imgur.com/GzvIBj7.png)
 - Now supports an 8-Material mode: use the 8 Material Export button instead of the 2 Material Export button when exporting.
