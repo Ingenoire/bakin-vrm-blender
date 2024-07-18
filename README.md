@@ -40,5 +40,9 @@ Works for both VRM 0.0 models and VRM 1.0 models.
 - Open Blender, and under "Edit" -> "Preferences", select "Add-ons". Then go to "Install...", find your downloaded zip file. Make sure to tick the addon box for it to activate (Blender 4.2 automatically activates it though).
 - The addon is set to the right side panel. Press the N key to open the side panel and find the VRoid for Bakin tab.
 
+### Tip
+![alt text](https://i.imgur.com/XAvD2cv.png)
+- To improve details on the eyes and other parts even more, turn off Vertex Compression for the model in the Model explorer of Bakin (not in the 3D Stamps explorer)
+
 ### Credits
 The addon was made through Microsoft Copilot and ChatGPT (using the Blender scripting GPT), after a lot of trial and error and a few tweaks.
