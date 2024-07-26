@@ -17,6 +17,8 @@ Works for both VRM 0.0 models and VRM 1.0 models.
 - Added a beta feature: extract rabbit ears, cat ears, and glasses, for use with Bakin's Subgraphics (letting you toggle it on/off in engine, etc).
   - Currently, you'll need to export the model on it's own not through the addon, put it in a folder, then delete the isolated mesh from the blender scene, export the model without the ears or glasses through the addon, and then move the glasses/ears model into the exported folder where the body and textures are, and then duplicate the DEF file and rename it to the filename of the ears/glasses.
 - Seperated Item Hook and the facial shape key bonuses as seperate functions.
+- Export FBX is greyed out when the blend file has not been saved.
+- Export FBX now will prompt you on exporting in 2, 8 or unlimited materials mode.
 
 ### Features
 - Simple and straightforward workflow: no need to touch anything Blender related if you don't want to!
