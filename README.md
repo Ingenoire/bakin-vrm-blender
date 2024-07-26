@@ -1,29 +1,22 @@
 # bakin-vrm-blender
-
-![alt text](https://i.imgur.com/pl18RUw.png)
+![alt text](https://i.imgur.com/T6TnJll.png)
 A Blender Addon that allows you to quickly rig and export VRM models for use with RPG Developer Bakin with item hooks, new shape keys for head tilting and eye looking, automatic material imports, and other fixes.
 Works for both VRM 0.0 models and VRM 1.0 models.
 
 >⚠️ You'll need the VRM Addon for Blender. https://vrm-addon-for-blender.info/en/
 >
->⚠️ Your VRM model must be exported with either 2 materials or 8 materials (changed through VRoid Studio's "Reduce Materials" export settings).
->
->⚠️ You'll need to save the current scene into a blend file before the export will work. Export generates a new folder in the same location as the blend file.
->
 
-### V2B Update
-- Adds an Unrestricted Material Export mode.
- - At the cost of having a ton of materials on a single model, and Bakin having LONG loading lag anytime an editor window loading the model occurs, it offers uncompressed textures on your models in game.
- - Great for higher detailed clothing and body skin textures, and could be great to use for cutscenes.
- - To use this, simply re-export your VRM from VRoid Studio, but this time, don't Reduce Materials (keep default).
-
-### V2 Update
-![alt text](https://i.imgur.com/GzvIBj7.png)
-- Now supports an 8-Material mode: use the 8 Material Export button instead of the 2 Material Export button when exporting.
-  - Your VRM model must be re-exported from VRoid Studio with the Reduce Materials settings set to 8.
-  - The main advantage of this mode is that smaller details surrounding the eyes (such as eye shadows, makeup, etc) get properly rendered using the TranslucentWithDepth mode on Bakin's toon shader.
-    - You can alter a 2 Material VRM to use TranslucentWithDepth and set the cutoff threshold to 0.005 manually in Bakin: but this will make the model unable to cast shadows among other issues, so the addon doesn't do that (and 2 Materials mean the entire face is fused with the eyes, so they can't be seperated).
-- Add-on moved to the right side panel (alongside 90% of other addons) instead of under the 3D tools.
+### V3 Update
+- Added the "Fusion Mesh and Hair/Head Shape Keys" function.
+  - Only works for 8 and Unlimited materials due to most 2 material meshes being split into only 2 meshes.
+  - This merges all three meshes (Hair, Face and Body) into a single mesh.
+  - This fusions the HEAD and HAIR shape keys into a new, singular set of HEAD shape keys.
+    - **This means HEAD will now affect both the hair and the hair (but only with a fused mesh due to modeling shenanigans).**
+- Adjusted the UI to look better and less cluttered.
+  - Detailed descriptions have been added, hover your mouse over a button to see them.
+- Added a beta feature: extract rabbit ears, cat ears, and glasses, for use with Bakin's Subgraphics (letting you toggle it on/off in engine, etc).
+  - Currently, you'll need to export the model on it's own not through the addon, put it in a folder, then delete the isolated mesh from the blender scene, export the model without the ears or glasses through the addon, and then move the glasses/ears model into the exported folder where the body and textures are, and then duplicate the DEF file and rename it to the filename of the ears/glasses.
+- Seperated Item Hook and the facial shape key bonuses as seperate functions.
 
 ### Features
 - Simple and straightforward workflow: no need to touch anything Blender related if you don't want to!
