@@ -6,6 +6,9 @@ Works for both VRM 0.0 models and VRM 1.0 models.
 >⚠️ You'll need the VRM Addon for Blender. https://vrm-addon-for-blender.info/en/
 >
 
+### V3.1 Hotfix
+- Fixed an issue when it comes to the DEF file for the fused models incorrectly assiging the body textures onto the iris and face.
+
 ### V3 Update
 - Added the "Fusion Mesh and Hair/Head Shape Keys" function.
   - Only works for 8 and Unlimited materials due to most 2 material meshes being split into only 2 meshes.
