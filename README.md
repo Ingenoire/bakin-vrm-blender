@@ -6,6 +6,11 @@ Works for both VRM 0.0 models and VRM 1.0 models.
 >⚠️ You'll need the VRM Addon for Blender. https://vrm-addon-for-blender.info/en/
 >
 
+### V3.2 Fix
+![alt_text](https://i.postimg.cc/bvvdH5XY/Capture-d-cran-2024-07-27-100949.png)
+- Necks properly bend in the fused models when using HEAD shape keys!
+  - It needs to create a new set of shape keys in the "Add Head and Eye shape keys" step, but gets fusioned into a singular head key with the fusion button.
+
 ### V3.1 Hotfix
 - Fixed an issue when it comes to the DEF file for the fused models incorrectly assiging the body textures onto the iris and face.
 
