@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Bakin VRM",
     "author": "ingenoire",
-    "version": (3, 0),
+    "version": (3, 1),
     "blender": (2, 80, 0),
     "location": "View3D > Tool Shelf > Run Script Button",
     "description": "Adds buttons that create itemhook bones and shape keys for both eye and head movement for VRoid VRM characters, for use with RPG Developer Bakin.",
@@ -215,13 +215,16 @@ class ExportFBXUnifiedButton(bpy.types.Operator):
             use_tspace=True
         )
 
+        meshes = [obj for obj in bpy.data.objects if obj.type == 'MESH']
+        single_body_mesh = 'Face' not in meshes and 'Hair' not in meshes
+        print(f"Single body mesh detected: {single_body_mesh}")  # Debug statement
+
         with open(os.path.join(dirpath, vrm_model_name + ".def"), 'w') as f:
-            meshes_of_interest = {'Face', 'Body', 'Hair'}
             materials_in_use = set()
             mesh_materials = {'Face': set(), 'Body': set(), 'Hair': set()}
 
             for obj in bpy.data.objects:
-                if obj.type == 'MESH' and obj.name in meshes_of_interest:
+                if obj.type == 'MESH' and obj.name in mesh_materials:
                     for mat_slot in obj.material_slots:
                         if mat_slot.material:
                             materials_in_use.add(mat_slot.material)
@@ -248,27 +251,48 @@ class ExportFBXUnifiedButton(bpy.types.Operator):
                 f.write('distanceFade false\n')
                 f.write('uvofs 0.000000 0.000000\n')
                 f.write('uvscl 1.000000 1.000000\n')
+                
+                material_name_upper = mat.name.upper()
+                print(f"Processing material: {mat.name}, Single body mesh: {single_body_mesh}")  # Debug statement
 
-                if material_count == '8':
-                    if "EYE" in mat.name or "CLOTH" in mat.name:
+                if material_count == '8' or material_count == 'unrestricted':
+                    if "EYE" in material_name_upper  or "CLOTH" in material_name_upper:
                         f.write('RenderingType TranslucentWithDepth\n')
                         f.write('cutOffThreshold 0.005000\n')
                     else:
                         f.write('RenderingType Cutoff\n')
                         f.write('cutOffThreshold 0.600000\n')
-
-                    if mat in mesh_materials['Hair'] or mat in mesh_materials['Body']:
-                        f.write(f'LitMap {vrm_model_name}_Image_3.png\n')
-                        f.write(f'ShadeMap {vrm_model_name}_Image_10.png\n')
-                        f.write(f'NormalMap {vrm_model_name}_Image_5.png\n')
-                        f.write(f'EmiMap {vrm_model_name}_Image_4.png\n')
-                        f.write(f'outlineWeight {vrm_model_name}_Image_11.png\n')
-                    elif mat in mesh_materials['Face']:
-                        f.write(f'LitMap {vrm_model_name}_Image_0.png\n')
-                        f.write(f'ShadeMap {vrm_model_name}_Image_7.png\n')
-                        f.write(f'NormalMap {vrm_model_name}_Image_2.png\n')
-                        f.write(f'EmiMap {vrm_model_name}_Image_1.png\n')
-                        f.write(f'outlineWeight {vrm_model_name}_Image_9.png\n')
+                    
+                    if single_body_mesh:
+                        if "FACE" in material_name_upper or "EYE" in material_name_upper:
+                            print(f"Using face/eye textures for material: {mat.name} (SINGLE BODY FOUND)")  # Debug statement
+                            f.write(f'LitMap {vrm_model_name}_Image_0.png\n')
+                            f.write(f'ShadeMap {vrm_model_name}_Image_7.png\n')
+                            f.write(f'NormalMap {vrm_model_name}_Image_2.png\n')
+                            f.write(f'EmiMap {vrm_model_name}_Image_1.png\n')
+                            f.write(f'outlineWeight {vrm_model_name}_Image_9.png\n')
+                        else:
+                            print(f"Using body textures for material: {mat.name} (SINGLE BODY FOUND)")  # Debug statement
+                            f.write(f'LitMap {vrm_model_name}_Image_3.png\n')
+                            f.write(f'ShadeMap {vrm_model_name}_Image_10.png\n')
+                            f.write(f'NormalMap {vrm_model_name}_Image_5.png\n')
+                            f.write(f'EmiMap {vrm_model_name}_Image_4.png\n')
+                            f.write(f'outlineWeight {vrm_model_name}_Image_11.png\n')
+                    else:
+                        if mat in mesh_materials['Hair'] or mat in mesh_materials['Body']:
+                            print(f"Using body textures for material: {mat.name} (MULTI BODY FOUND)")  # Debug statement
+                            f.write(f'LitMap {vrm_model_name}_Image_3.png\n')
+                            f.write(f'ShadeMap {vrm_model_name}_Image_10.png\n')
+                            f.write(f'NormalMap {vrm_model_name}_Image_5.png\n')
+                            f.write(f'EmiMap {vrm_model_name}_Image_4.png\n')
+                            f.write(f'outlineWeight {vrm_model_name}_Image_11.png\n')
+                        elif mat in mesh_materials['Face']:
+                            print(f"Using face/eye textures for material: {mat.name} (MULTI BODY FOUND)")  # Debug statement
+                            f.write(f'LitMap {vrm_model_name}_Image_0.png\n')
+                            f.write(f'ShadeMap {vrm_model_name}_Image_7.png\n')
+                            f.write(f'NormalMap {vrm_model_name}_Image_2.png\n')
+                            f.write(f'EmiMap {vrm_model_name}_Image_1.png\n')
+                            f.write(f'outlineWeight {vrm_model_name}_Image_9.png\n')
 
                 elif material_count == '2':
                     f.write('RenderingType Cutoff\n')
@@ -286,24 +310,6 @@ class ExportFBXUnifiedButton(bpy.types.Operator):
                         f.write(f'NormalMap {vrm_model_name}_Image_2.png\n')
                         f.write(f'EmiMap {vrm_model_name}_Image_1.png\n')
                         f.write(f'outlineWeight {vrm_model_name}_Image_9.png\n')
-
-                elif material_count == 'unrestricted':
-                    if "EYE" in mat.name or "CLOTH" in mat.name or "FACE" in mat.name:
-                        f.write('RenderingType TranslucentWithDepth\n')
-                        f.write('cutOffThreshold 0.005000\n')
-                    else:
-                        f.write('RenderingType Cutoff\n')
-                        f.write('cutOffThreshold 0.600000\n')
-
-                    lit_map = vrm_model_name + "_" + self.get_litmap_name(mat) + ".png"
-                    shade_map = vrm_model_name + "_" + self.get_shademap_name(mat) + ".png"
-                    normal_map = vrm_model_name + "_" + self.get_normalmap_name(mat) + ".png"
-                    emi_map = vrm_model_name + "_" + self.get_emimap_name(mat) + ".png"
-
-                    f.write(f'LitMap {lit_map}\n')
-                    f.write(f'ShadeMap {shade_map}\n')
-                    f.write(f'NormalMap {normal_map}\n')
-                    f.write(f'EmiMap {emi_map}\n')
 
                 f.write('LitColor 1.000000 1.000000 1.000000 1.000000\n')
                 f.write('ShadeColor 0.600000 0.600000 0.600000 1.000000\n')
