@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Bakin VRM",
     "author": "ingenoire",
-    "version": (3, 1),
+    "version": (3, 2),
     "blender": (2, 80, 0),
     "location": "View3D > Tool Shelf > Run Script Button",
     "description": "Adds buttons that create itemhook bones and shape keys for both eye and head movement for VRoid VRM characters, for use with RPG Developer Bakin.",
@@ -63,9 +63,7 @@ class AddHeadEyeShapeKeysButton(bpy.types.Operator):
     bl_label = "Add Head + Eye Shape Keys"
     bl_description = "Adds Shape Keys for both eye positioning and head tilt / rotation. This will let you pose the eyes / head in real time using BAKIN's Blend Shapes. Mix & match in bakin for best results."
 
-
     def execute(self, context):
-        # Your script for adding head and eye shape keys goes here
         # Define the rotations for each shape key
         rotations = {
             "EYE_LR_RIGHT": ('Z', math.radians(-8), 'J_Adj_L_FaceEye', 'J_Adj_R_FaceEye'),
@@ -92,6 +90,16 @@ class AddHeadEyeShapeKeysButton(bpy.types.Operator):
             "HEAD_RIGHT": ('Y', math.radians(30), 'J_Bip_C_Head'),
             "HEAD_TILT_LEFT": ('Z', math.radians(30), 'J_Bip_C_Head'),
             "HEAD_TILT_RIGHT": ('Z', math.radians(-30), 'J_Bip_C_Head'),
+        }
+
+        # Define the BODY shape keys
+        body_rotations = {
+            "BODY_UP": ('X', math.radians(-30), 'J_Bip_C_Head'),
+            "BODY_DOWN": ('X', math.radians(30), 'J_Bip_C_Head'),
+            "BODY_LEFT": ('Y', math.radians(-30), 'J_Bip_C_Head'),
+            "BODY_RIGHT": ('Y', math.radians(30), 'J_Bip_C_Head'),
+            "BODY_TILT_LEFT": ('Z', math.radians(30), 'J_Bip_C_Head'),
+            "BODY_TILT_RIGHT": ('Z', math.radians(-30), 'J_Bip_C_Head'),
         }
 
         # Select the armature and enter pose mode
@@ -140,6 +148,42 @@ class AddHeadEyeShapeKeysButton(bpy.types.Operator):
                 bpy.context.view_layer.objects.active = bpy.data.objects['Face']
 
             # Apply the armature modifier as a shape key
+            bpy.ops.object.modifier_apply_as_shapekey(modifier="Armature")
+
+            # Rename the shape key
+            bpy.context.object.data.shape_keys.key_blocks[-1].name = shape_key_name
+
+            # Re-add the armature modifier
+            bpy.ops.object.modifier_add(type='ARMATURE')
+            bpy.context.object.modifiers["Armature"].object = bpy.data.objects["Armature"]
+
+            # Reset the bone rotation to the initial pose
+            bpy.ops.object.select_all(action='DESELECT')
+            bpy.data.objects['Armature'].select_set(True)
+            bpy.context.view_layer.objects.active = bpy.data.objects['Armature']
+            bpy.ops.object.mode_set(mode='POSE')
+            for bone in bpy.data.objects['Armature'].pose.bones:
+                bone.rotation_euler = initial_pose[bone]
+
+        # Process BODY shape keys
+        for shape_key_name, rotation_data in body_rotations.items():
+            axis, angle, *bones = rotation_data
+
+            for bone_name in bones:
+                # Select the bone and rotate it
+                bpy.data.objects['Armature'].pose.bones[bone_name].rotation_mode = 'XYZ'
+                if axis == 'Z':
+                    bpy.data.objects['Armature'].pose.bones[bone_name].rotation_euler[2] += angle
+                elif axis == 'X':
+                    bpy.data.objects['Armature'].pose.bones[bone_name].rotation_euler[0] += angle
+                elif axis == 'Y':
+                    bpy.data.objects['Armature'].pose.bones[bone_name].rotation_euler[1] += angle
+
+            # Apply the pose as a shape key on the Body mesh
+            bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.select_all(action='DESELECT')
+            bpy.data.objects['Body'].select_set(True)
+            bpy.context.view_layer.objects.active = bpy.data.objects['Body']
             bpy.ops.object.modifier_apply_as_shapekey(modifier="Armature")
 
             # Rename the shape key
@@ -422,27 +466,40 @@ class FusionAndAddBonusesButton(bpy.types.Operator):
         # Find pairs of HEAD_ and HAIR_ shape keys
         head_keys = {key.name: key for key in shape_keys.key_blocks if key.name.startswith("HEAD_")}
         hair_keys = {key.name: key for key in shape_keys.key_blocks if key.name.startswith("HAIR_")}
+        body_keys = {key.name: key for key in shape_keys.key_blocks if key.name.startswith("BODY_")}
         
+        # Ensure the vertex group exists
+        if "J_Bip_C_Head" not in merged_obj.vertex_groups:
+            self.report({'ERROR'}, "Vertex group 'J_Bip_C_Head' not found in the merged object.")
+            return {'CANCELLED'}
+        
+        head_vertex_group = merged_obj.vertex_groups["J_Bip_C_Head"]
+
         for head_key_name, head_key in head_keys.items():
             corresponding_hair_key_name = head_key_name.replace("HEAD_", "HAIR_")
-            if corresponding_hair_key_name in hair_keys:
+            corresponding_body_key_name = head_key_name.replace("HEAD_", "BODY_")
+            if corresponding_hair_key_name in hair_keys and corresponding_body_key_name in body_keys:
                 itemlook_name = "HEAD_" + head_key_name.replace("HEAD_", "")
                 # Create a new shape key for ITEMLOOK
                 bpy.ops.object.shape_key_add()
                 new_key = shape_keys.key_blocks[-1]
                 new_key.name = itemlook_name
                 
-                # Apply both head and hair changes to the ITEMLOOK key
+                # Apply head, hair, and body changes to the ITEMLOOK key
                 for vertex_index in range(len(merged_obj.data.vertices)):
                     base_vertex = shape_keys.key_blocks[0].data[vertex_index].co
                     head_vertex = head_key.data[vertex_index].co
                     hair_vertex = hair_keys[corresponding_hair_key_name].data[vertex_index].co
-                    new_key.data[vertex_index].co = base_vertex + (head_vertex - base_vertex) + (hair_vertex - base_vertex)
+                    body_vertex = body_keys[corresponding_body_key_name].data[vertex_index].co
+                    new_vertex_position = base_vertex + (head_vertex - base_vertex) + (hair_vertex - base_vertex) + (body_vertex - base_vertex)
+                    
+                    # Apply the new position to the shape key
+                    new_key.data[vertex_index].co = new_vertex_position
 
                 # Ensure the new shape key is within the 0.0 to 1.0 range
                 new_key.value = min(new_key.value, 1.0)
 
-        # Delete the original HEAD_ and HAIR_ shape keys
+        # Delete the original HEAD_, HAIR_, and BODY_ shape keys
         for head_key_name in list(head_keys.keys()):
             bpy.context.object.active_shape_key_index = bpy.context.object.data.shape_keys.key_blocks.keys().index(head_key_name)
             bpy.ops.object.shape_key_remove()
@@ -450,7 +507,11 @@ class FusionAndAddBonusesButton(bpy.types.Operator):
         for hair_key_name in list(hair_keys.keys()):
             bpy.context.object.active_shape_key_index = bpy.context.object.data.shape_keys.key_blocks.keys().index(hair_key_name)
             bpy.ops.object.shape_key_remove()
-            
+
+        for body_key_name in list(body_keys.keys()):
+            bpy.context.object.active_shape_key_index = bpy.context.object.data.shape_keys.key_blocks.keys().index(body_key_name)
+            bpy.ops.object.shape_key_remove()
+
         # Remove ".001" suffix from HEAD_ shape key names
         for key in shape_keys.key_blocks:
             if key.name.startswith("HEAD_") and ".001" in key.name:
