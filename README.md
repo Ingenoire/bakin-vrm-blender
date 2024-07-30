@@ -1,10 +1,12 @@
 # bakin-vrm-blender
 ![alt text](https://i.imgur.com/T6TnJll.png)
-A Blender Addon that allows you to quickly rig and export VRM models for use with RPG Developer Bakin with item hooks, new shape keys for head tilting and eye looking, automatic material imports, and other fixes.
-Works for both VRM 0.0 models and VRM 1.0 models.
+
+**A Blender Addon that allows you to quickly rig and export VRM models for use with RPG Developer Bakin with item hooks, new shape keys for head tilting and eye looking, automatic material imports, and other fixes.
+Works for both VRM 0.0 models and VRM 1.0 models.**
 
 >⚠️ You'll need the VRM Addon for Blender. https://vrm-addon-for-blender.info/en/
->
+
+- *If you wish to import general models for BAKIN using PBR, use this Blender add-on instead: https://github.com/Ingenoire/bakin-blender-exporter*
 
 ### V3.2 Fix
 ![alt_text](https://i.imgur.com/TiRP7nf.png)
