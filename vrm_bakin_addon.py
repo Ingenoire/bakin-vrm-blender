@@ -19,9 +19,7 @@ class AddItemHooksButton(bpy.types.Operator):
     bl_label = "Add Item Hooks"
     bl_description = "Adds Item Hook bones to the left and right hand of the VRM model. This will let you hold items in either hand using the 'Attach Model to Cast' event in Bakin."
 
-
     def execute(self, context):
-        # Your script for adding item hooks goes here
         # Push the current state to the undo stack
         bpy.ops.ed.undo_push(message="Run VRM Bakin Utils")
 
@@ -45,8 +43,11 @@ class AddItemHooksButton(bpy.types.Operator):
             hand_bone = bpy.data.armatures['Armature'].edit_bones[hand_bone_name]
             hand_bone.select = True
 
+            # Determine the new bone name
+            new_bone_name = 'L_itemhook' if 'L_' in hand_bone_name else 'R_itemhook'
+
             # Add a new bone called itemhook at the same position as the hand bone
-            new_bone = bpy.data.armatures['Armature'].edit_bones.new(f'{hand_bone_name[:7]}_itemhook')
+            new_bone = bpy.data.armatures['Armature'].edit_bones.new(new_bone_name)
             offset = mathutils.Vector((0.06, 0.04, -0.02)) if 'L_' in hand_bone_name else mathutils.Vector((-0.06, 0.04, -0.02))
             new_bone.head = hand_bone.head + offset
             new_bone.tail = hand_bone.head + mathutils.Vector((hand_bone.tail.y - hand_bone.head.y, -hand_bone.tail.x + hand_bone.head.x, 0)) + offset if 'L_' in hand_bone_name else hand_bone.head + mathutils.Vector((hand_bone.tail.y - hand_bone.head.y, hand_bone.tail.x - hand_bone.head.x, 0)) + offset
