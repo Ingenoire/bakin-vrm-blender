@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Bakin VRM",
     "author": "ingenoire",
-    "version": (3, 2),
+    "version": (3, 3),
     "blender": (2, 80, 0),
     "location": "View3D > Tool Shelf > Run Script Button",
     "description": "Adds buttons that create itemhook bones and shape keys for both eye and head movement for VRoid VRM characters, for use with RPG Developer Bakin.",
@@ -221,6 +221,13 @@ class ExportFBXUnifiedButton(bpy.types.Operator):
         ],
         default='8'
     )
+    
+    # Add Accurate Shadows &/OR Body Outlines tickbox
+    accurate_shadows_body_outlines: bpy.props.BoolProperty(
+        name="Accurate Shadows &/OR Body Outlines",
+        description="Using outlines, or want more accurate shadows? Enable this, as it'll make outlines usable and will cast shadows. This reduces graphical fidelity. Only on 8 or Unlimited Material modes.",
+        default=False
+    )
 
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
@@ -228,18 +235,26 @@ class ExportFBXUnifiedButton(bpy.types.Operator):
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "material_count", expand=True)
+        
+        # Show or grey out the checkbox based on selected material type
+        if self.material_count in {'8', 'unrestricted'}:
+            layout.prop(self, "accurate_shadows_body_outlines")
+        else:
+            layout.label(text="Accurate Shadows &/OR Body Outlines (Only for 8/Unlimited Modes)", icon="INFO")
+
         layout.label(text="Configure the export settings and click OK to proceed.")
 
     def execute(self, context):
         try:
             material_count = self.material_count
-            self.export_fbx(context, material_count)
+            accurate_shadows = self.accurate_shadows_body_outlines
+            self.export_fbx(context, material_count, accurate_shadows)
         except Exception as e:
             self.report({'ERROR'}, f"Failed to export FBX: {e}")
             return {'CANCELLED'}
         return {'FINISHED'}
 
-    def export_fbx(self, context, material_count):
+    def export_fbx(self, context, material_count, accurate_shadows_body_outlines):
         vrm_model_name = bpy.data.objects['Armature'].data.vrm_addon_extension.vrm1.meta['vrm_name'].replace(' ', '_')
         dirpath = bpy.path.abspath("//" + vrm_model_name + " (Bakin Export)")
         os.makedirs(dirpath, exist_ok=True)
@@ -288,11 +303,28 @@ class ExportFBXUnifiedButton(bpy.types.Operator):
                 f.write('uvstepanimparam 1 1 0 1.000000\n')
                 f.write('sortindex 0\n')
                 f.write('castshadow true\n')
-                f.write('cull back\n')
-                f.write('drawOutline false\n')
-                f.write('outlineWidth 1.000000\n')
-                f.write('outlineColor 0.000000 0.000000 0.000000 1.000000\n')
-                f.write('overrideOutlineSetting false\n')
+
+
+                gltf = mat.vrm_addon_extension.mtoon1
+                mtoon = gltf.extensions.vrmc_materials_mtoon
+                outline_width = round(mtoon.outline_width_factor, 3)
+
+                if outline_width > 0:
+                    f.write('drawOutline true\n')
+                else:
+                    f.write('drawOutline false\n')
+                    
+                f.write(f'outlineWidth {outline_width}\n')
+
+                outline_color = mtoon.outline_color_factor
+                f.write(f'outlineColor {outline_color[0]:.6f} {outline_color[1]:.6f} {outline_color[2]:.6f} 1.000000\n')
+                
+                f.write('overrideOutlineSetting true\n')
+                
+                f.write('outlineType World\n')
+                f.write('outlineMaxScale 1.000000\n')
+                f.write('outlineMixLighting 0.000000\n')
+
                 f.write('distanceFade false\n')
                 f.write('uvofs 0.000000 0.000000\n')
                 f.write('uvscl 1.000000 1.000000\n')
@@ -301,12 +333,21 @@ class ExportFBXUnifiedButton(bpy.types.Operator):
                 print(f"Processing material: {mat.name}, Single body mesh: {single_body_mesh}")  # Debug statement
 
                 if material_count == '8' or material_count == 'unrestricted':
-                    if "EYE" in material_name_upper  or "CLOTH" in material_name_upper:
+                    if "CLOTH" in material_name_upper and accurate_shadows_body_outlines:
+                        f.write('RenderingType Cutoff\n')
+                        f.write('cutOffThreshold 0.600000\n')
+                    elif "EYE" in material_name_upper or "CLOTH" in material_name_upper:
                         f.write('RenderingType TranslucentWithDepth\n')
                         f.write('cutOffThreshold 0.005000\n')
                     else:
                         f.write('RenderingType Cutoff\n')
                         f.write('cutOffThreshold 0.600000\n')
+
+                    if "CLOTH" in material_name_upper:
+                        f.write('cull none\n')
+                    else:
+                        f.write('cull back\n')
+
                     
                     if single_body_mesh:
                         if "FACE" in material_name_upper or "EYE" in material_name_upper:
@@ -342,6 +383,7 @@ class ExportFBXUnifiedButton(bpy.types.Operator):
                 elif material_count == '2':
                     f.write('RenderingType Cutoff\n')
                     f.write('cutOffThreshold 0.600000\n')
+                    f.write('cull back\n')
 
                     if mat in mesh_materials['Hair'] or mat in mesh_materials['Body']:
                         f.write(f'LitMap {vrm_model_name}_Image_3.png\n')
@@ -372,9 +414,6 @@ class ExportFBXUnifiedButton(bpy.types.Operator):
                 f.write('RimLightingMix 0.000000\n')
                 f.write('RimFresnelPow 0.000000\n')
                 f.write('RimLift 0.000000\n')
-                f.write('outlineType World\n')
-                f.write('outlineMaxScale 1.000000\n')
-                f.write('outlineMixLighting 0.000000\n')
                 f.write('UVRotateAnimation 0.000000\n')
                 f.write('\n')
 
@@ -427,7 +466,28 @@ class FusionAndAddBonusesButton(bpy.types.Operator):
         if "Hair" not in bpy.data.objects or "Face" not in bpy.data.objects or "Body" not in bpy.data.objects:
             self.report({'ERROR'}, "Required objects are missing (Hair, Face, Body).")
             return {'CANCELLED'}
-        
+
+        # Dictionary to store the outline_width_mode values
+        outline_width_mode_values = {}
+
+        # Function to store outline_width_mode before merge
+        def store_outline_width_mode(obj):
+            for mat_slot in obj.material_slots:
+                if mat_slot.material is not None:
+                    material = mat_slot.material
+                    try:
+                        outline_width_mode = material.vrm_addon_extension.mtoon1.extensions.vrmc_materials_mtoon.outline_width_mode
+                        outline_width_mode_values[material.name] = outline_width_mode
+                        print(outline_width_mode_values[material.name])
+                    except AttributeError:
+                        # If the material doesn't have this property, continue
+                        pass
+
+        # Store outline_width_mode for Hair, Face, and Body
+        store_outline_width_mode(bpy.data.objects["Hair"])
+        store_outline_width_mode(bpy.data.objects["Face"])
+        store_outline_width_mode(bpy.data.objects["Body"])
+
         # Join Hair into Face
         hair = bpy.data.objects["Hair"]
         face = bpy.data.objects["Face"]
@@ -437,7 +497,7 @@ class FusionAndAddBonusesButton(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='OBJECT')
         hair.select_set(True)
         bpy.ops.object.join()
-        
+
         # Join Face into Body
         face = bpy.data.objects["Face"]  # Now Face includes Hair
         body = bpy.data.objects["Body"]
@@ -451,6 +511,16 @@ class FusionAndAddBonusesButton(bpy.types.Operator):
         # Get the newly joined object (which is now the Body with Face and Hair)
         merged_obj = bpy.context.active_object
 
+        # Reassign the outline_width_mode to the merged object's materials
+        for mat_slot in merged_obj.material_slots:
+            if mat_slot.material is not None:
+                material = mat_slot.material
+                if material.name in outline_width_mode_values:
+                    try:
+                        material.vrm_addon_extension.mtoon1.extensions.vrmc_materials_mtoon.outline_width_mode = outline_width_mode_values[material.name]
+                    except AttributeError:
+                        pass
+
         # Push the current state to the undo stack
         bpy.ops.ed.undo_push(message="Fusion Meshes and Hair/Head Keys")
 
@@ -458,7 +528,7 @@ class FusionAndAddBonusesButton(bpy.types.Operator):
         if merged_obj.data.shape_keys is None:
             # Add a base shape key if none exist
             bpy.ops.object.shape_key_add()
-        
+
         shape_keys = merged_obj.data.shape_keys
         if shape_keys is None:
             self.report({'ERROR'}, "Shape keys not found in the merged object.")
@@ -468,12 +538,12 @@ class FusionAndAddBonusesButton(bpy.types.Operator):
         head_keys = {key.name: key for key in shape_keys.key_blocks if key.name.startswith("HEAD_")}
         hair_keys = {key.name: key for key in shape_keys.key_blocks if key.name.startswith("HAIR_")}
         body_keys = {key.name: key for key in shape_keys.key_blocks if key.name.startswith("BODY_")}
-        
+
         # Ensure the vertex group exists
         if "J_Bip_C_Head" not in merged_obj.vertex_groups:
             self.report({'ERROR'}, "Vertex group 'J_Bip_C_Head' not found in the merged object.")
             return {'CANCELLED'}
-        
+
         head_vertex_group = merged_obj.vertex_groups["J_Bip_C_Head"]
 
         for head_key_name, head_key in head_keys.items():
@@ -485,7 +555,7 @@ class FusionAndAddBonusesButton(bpy.types.Operator):
                 bpy.ops.object.shape_key_add()
                 new_key = shape_keys.key_blocks[-1]
                 new_key.name = itemlook_name
-                
+
                 # Apply head, hair, and body changes to the ITEMLOOK key
                 for vertex_index in range(len(merged_obj.data.vertices)):
                     base_vertex = shape_keys.key_blocks[0].data[vertex_index].co
@@ -493,7 +563,7 @@ class FusionAndAddBonusesButton(bpy.types.Operator):
                     hair_vertex = hair_keys[corresponding_hair_key_name].data[vertex_index].co
                     body_vertex = body_keys[corresponding_body_key_name].data[vertex_index].co
                     new_vertex_position = base_vertex + (head_vertex - base_vertex) + (hair_vertex - base_vertex) + (body_vertex - base_vertex)
-                    
+
                     # Apply the new position to the shape key
                     new_key.data[vertex_index].co = new_vertex_position
 
@@ -521,6 +591,7 @@ class FusionAndAddBonusesButton(bpy.types.Operator):
 
         bpy.ops.object.mode_set(mode='OBJECT')
         return {'FINISHED'}
+
     
     
 class ExtractGlassesButton(bpy.types.Operator):
