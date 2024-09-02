@@ -8,33 +8,18 @@ Works for both VRM 0.0 models and VRM 1.0 models.**
 
 - *If you wish to import general models for BAKIN using PBR, use this Blender add-on instead: https://github.com/Ingenoire/bakin-blender-exporter*
 
-### V3.2 Fix
-![alt_text](https://i.imgur.com/TiRP7nf.png)
-- Necks properly bend in the fused models when using HEAD shape keys!
-  - It needs to create a new set of shape keys in the "Add Head and Eye shape keys" step, but gets fusioned into a singular head key with the fusion button.
-
-### V3.1 Hotfix
-- Fixed an issue when it comes to the DEF file for the fused models incorrectly assiging the body textures onto the iris and face.
-
-### V3 Update
-- Added the "Fusion Mesh and Hair/Head Shape Keys" function.
-  - Only works for 8 and Unlimited materials due to most 2 material meshes being split into only 2 meshes.
-  - This merges all three meshes (Hair, Face and Body) into a single mesh.
-  - This fusions the HEAD and HAIR shape keys into a new, singular set of HEAD shape keys.
-    - **This means HEAD will now affect both the hair and the hair (but only with a fused mesh due to modeling shenanigans).**
-- Adjusted the UI to look better and less cluttered.
-  - Detailed descriptions have been added, hover your mouse over a button to see them.
-- Added a beta feature: extract rabbit ears, cat ears, and glasses, for use with Bakin's Subgraphics (letting you toggle it on/off in engine, etc).
-  - Currently, you'll need to export the model on it's own not through the addon, put it in a folder, then delete the isolated mesh from the blender scene, export the model without the ears or glasses through the addon, and then move the glasses/ears model into the exported folder where the body and textures are, and then duplicate the DEF file and rename it to the filename of the ears/glasses.
-- Seperated Item Hook and the facial shape key bonuses as seperate functions.
-- Export FBX is greyed out when the blend file has not been saved.
-- Export FBX now will prompt you on exporting in 2, 8 or unlimited materials mode.
+### V4.0: Multiple Irises through Blend Shapes added!
+A pretty major feature, you can now load in a new texture that holds up to 4 different irises, and you'll be able to swap the iris textures in Bakin on the fly! This is great for creating more expressive characters through the use of things like heart-shaped eyes, soulless eyes, etc...
+>⚠️ It might not work on some models.
 
 ### Features
 - Simple and straightforward workflow: no need to touch anything Blender related if you don't want to!
 - Automatic item hook bones, so that your character can hold items in engine!
 - Creates shape keys for head (tilt head) and eyes (look at), for better emotions in engine!
-- Generates a .DEF file through the built-in exporter to automatically import textures into the engine.
+- Higher quality 8 and unlimited material modes supported (compared to 2 from Bakin tutorials) for more accurate looking models!
+- Add optional alternative iris textures (up to 4) to display different emotions, that can be swapped in-engine through the use of Blend Shapes!
+- Generates a .DEF file through the built-in exporter to *automatically import textures into the engine.*
+- Outlines are (kinda) supported (but honestly it's best to just select all the materials in-engine, and then batch change their outline properties for now)!
 - Adjusts the texture names to be easily sorted through in engine.
 - Removes VRM 1.0 icosphere.
 - Creates a new folder in the same directory as your blender project containing all the exported files.
