@@ -609,7 +609,7 @@ class FusionAndAddBonusesButton(bpy.types.Operator):
 class CreateAlternateIrisesButton(bpy.types.Operator):
     bl_idname = "object.create_alternate_irises"
     bl_label = "Create Alternate Irises"
-    bl_description = "Creates alternate iris vertex groups and corresponding bones with shape keys for iris pattern control."
+    bl_description = "Creates alternative irises that can be displayed as emotions through blend shapes in Bakin! IMPORTANT: Provide it with a 4096x4096 image. The image is divided into 4 blocks of 2048x2048px, and within each block, the irises are situated in the bottom half, with the eye highlights in the top half of each section. Try out the template image on the github!"
 
     filepath: bpy.props.StringProperty(subtype="FILE_PATH")
 
@@ -792,7 +792,7 @@ class CreateAlternateIrisesButton(bpy.types.Operator):
             bpy.ops.object.shape_key_add(name="Basis", from_mix=False)
 
         for i in range(1, 5):
-            shape_key_name = f"show_iris_pattern_{i}"
+            shape_key_name = f"ALTERNATE_IRIS_{i}"
             shape_key = face_mesh.shape_key_add(name=shape_key_name, from_mix=False)
 
             # Activate the new shape key
@@ -982,7 +982,7 @@ class RunScriptButtonPanel(bpy.types.Panel):
         layout.operator("object.add_head_eye_shape_keys", icon='EVENT_TWOKEY')
 
         # Button to create alternate irises
-        layout.operator("object.create_alternate_irises", icon='EVENT_FOURKEY')
+        layout.operator("object.create_alternate_irises", icon='VIS_SEL_11')
 
         layout.operator("object.fusion_and_add_bonuses", icon='EVENT_THREEKEY')
         
