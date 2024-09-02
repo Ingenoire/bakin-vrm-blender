@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Bakin VRM",
     "author": "ingenoire",
-    "version": (3, 3),
+    "version": (4, 0),
     "blender": (2, 80, 0),
     "location": "View3D > Tool Shelf > Run Script Button",
     "description": "Adds buttons that create itemhook bones and shape keys for both eye and head movement for VRoid VRM characters, for use with RPG Developer Bakin.",
@@ -13,6 +13,7 @@ import os
 import math
 import mathutils
 import textwrap
+import bmesh
 
 class AddItemHooksButton(bpy.types.Operator):
     bl_idname = "object.add_item_hooks"
@@ -348,8 +349,13 @@ class ExportFBXUnifiedButton(bpy.types.Operator):
                     else:
                         f.write('cull back\n')
 
-                    
-                    if single_body_mesh:
+                    if "EYE_ALTERNATIVE_IRISES" in material_name_upper:
+                            f.write(f'LitMap {vrm_model_name}_{self.get_litmap_name(mat)}.png\n')
+                            f.write(f'ShadeMap {vrm_model_name}_Image_7.png\n')
+                            f.write(f'NormalMap {vrm_model_name}_Image_2.png\n')
+                            f.write(f'EmiMap {vrm_model_name}_Image_1.png\n')
+                            f.write(f'outlineWeight {vrm_model_name}_Image_9.png\n')
+                    elif single_body_mesh:
                         if "FACE" in material_name_upper or "EYE" in material_name_upper:
                             print(f"Using face/eye textures for material: {mat.name} (SINGLE BODY FOUND)")  # Debug statement
                             f.write(f'LitMap {vrm_model_name}_Image_0.png\n')
@@ -385,7 +391,13 @@ class ExportFBXUnifiedButton(bpy.types.Operator):
                     f.write('cutOffThreshold 0.600000\n')
                     f.write('cull back\n')
 
-                    if mat in mesh_materials['Hair'] or mat in mesh_materials['Body']:
+                    if "EYE_ALTERNATIVE_IRISES" in material_name_upper:
+                        f.write(f'LitMap {vrm_model_name}_{self.get_litmap_name(mat)}.png\n')
+                        f.write(f'ShadeMap {vrm_model_name}_Image_7.png\n')
+                        f.write(f'NormalMap {vrm_model_name}_Image_2.png\n')
+                        f.write(f'EmiMap {vrm_model_name}_Image_1.png\n')
+                        f.write(f'outlineWeight {vrm_model_name}_Image_9.png\n')
+                    elif mat in mesh_materials['Hair'] or mat in mesh_materials['Body']:
                         f.write(f'LitMap {vrm_model_name}_Image_3.png\n')
                         f.write(f'ShadeMap {vrm_model_name}_Image_10.png\n')
                         f.write(f'NormalMap {vrm_model_name}_Image_5.png\n')
@@ -592,7 +604,228 @@ class FusionAndAddBonusesButton(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='OBJECT')
         return {'FINISHED'}
 
-    
+
+
+class CreateAlternateIrisesButton(bpy.types.Operator):
+    bl_idname = "object.create_alternate_irises"
+    bl_label = "Create Alternate Irises"
+    bl_description = "Creates alternate iris vertex groups and corresponding bones with shape keys for iris pattern control."
+
+    filepath: bpy.props.StringProperty(subtype="FILE_PATH")
+
+    def execute(self, context):
+        # Load the image from the file path
+        image = self.load_image(self.filepath)
+        if image is None:
+            return {'CANCELLED'}
+        
+        # Rename the image to "Irises_0"
+        image.name = "Irises_0"
+        
+        # Process the irises with the loaded image
+        return self.process_irises(context, image)
+
+    def invoke(self, context, event):
+        # Open file browser to select an image
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+    def load_image(self, filepath):
+        if not filepath:
+            self.report({'ERROR'}, "No file selected")
+            return None
+
+        try:
+            # Load the image
+            image = bpy.data.images.load(filepath)
+            return image
+        except Exception as e:
+            self.report({'ERROR'}, f"Failed to load image: {str(e)}")
+            return None
+
+    def process_irises(self, context, image):
+        face_mesh = bpy.data.objects.get('Face')
+        armature = bpy.data.objects.get('Armature')
+
+        if not face_mesh or not armature:
+            self.report({'ERROR'}, "Required objects not found.")
+            return {'CANCELLED'}
+
+        # Create 4 vertex groups in the Face mesh for each side (L and R) for the alternate irises
+        for side in ['L', 'R']:
+            for i in range(1, 5):
+                group_name = f'J_Adj_{side}_FaceEyeAlt{i}'
+                if group_name not in face_mesh.vertex_groups:
+                    face_mesh.vertex_groups.new(name=group_name)
+
+        # Enter edit mode to manipulate vertex groups
+        bpy.context.view_layer.objects.active = face_mesh
+        bpy.ops.object.mode_set(mode='EDIT')
+
+        # Ensure only vertices from the base group are selected and duplicated
+        for side in ['L', 'R']:
+            base_group_name = f'J_Adj_{side}_FaceEye'
+            base_group = face_mesh.vertex_groups.get(base_group_name)
+
+            if base_group:
+                face_mesh.vertex_groups.active = base_group
+                bpy.ops.mesh.select_all(action='DESELECT')
+                bpy.ops.object.vertex_group_select()
+
+                # Duplicate vertices and assign them to new groups
+                for i in range(1, 5):
+                    new_group_name = f'J_Adj_{side}_FaceEyeAlt{i}'
+
+                    # Duplicate the selected vertices
+                    bpy.ops.mesh.duplicate()
+                    bpy.ops.transform.translate(value=(0, 0.015, 0))  # Move along Y axis
+
+                    # Unassign duplicated vertices from the base group and assign to the new group
+                    bpy.ops.object.vertex_group_remove_from()
+                    face_mesh.vertex_groups.active = face_mesh.vertex_groups.get(new_group_name)
+                    if face_mesh.vertex_groups.active:
+                        bpy.ops.object.vertex_group_assign()
+
+                    # Assign the new material to the duplicated vertices
+                    bpy.ops.mesh.select_all(action='DESELECT')
+                    bpy.ops.object.vertex_group_select()
+
+                    # Find or create the material index for the new material
+                    new_material_name = "EYE_ALTERNATIVE_IRISES"
+                    new_material = bpy.data.materials.get(new_material_name)
+                    
+                    if not new_material:
+                        original_material = bpy.data.materials.get("N00_000_00_FaceMouth_00_FACE (Instance)")
+                        if original_material:
+                            new_material = original_material.copy()
+                            new_material.name = new_material_name
+
+                    # Check if the new material is already in the material slot by name
+                    if new_material.name not in [mat.name for mat in face_mesh.data.materials]:
+                        face_mesh.data.materials.append(new_material)
+
+                    # Get the material index
+                    material_index = face_mesh.data.materials.find(new_material.name)
+
+                    # Assign material to the selected (duplicated) faces
+                    face_mesh.active_material_index = material_index
+                    bpy.ops.object.material_slot_assign()
+
+                    # Apply the texture to the new material's VRM extension
+                    if hasattr(new_material, 'vrm_addon_extension'):
+                        vrm_extension = new_material.vrm_addon_extension
+                        if hasattr(vrm_extension, 'mtoon1'):
+                            mtoon1 = vrm_extension.mtoon1
+                            if hasattr(mtoon1, 'pbr_metallic_roughness'):
+                                pbr_metallic_roughness = mtoon1.pbr_metallic_roughness
+                                if hasattr(pbr_metallic_roughness, 'base_color_texture'):
+                                    base_color_texture = pbr_metallic_roughness.base_color_texture
+                                    base_color_texture.index.source = image
+                                else:
+                                    self.report({'ERROR'}, "Base color texture not found in VRM extension")
+                            else:
+                                self.report({'ERROR'}, "PBR metallic roughness not found in VRM extension")
+                        else:
+                            self.report({'ERROR'}, "MToon1 extension not found in VRM extension")
+                    else:
+                        self.report({'ERROR'}, "VRM addon extension not found in material")
+
+        # Exit edit mode
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        # Shift the UVs of each duplicate based on their number
+        for i in range(1, 5):
+            bpy.context.view_layer.objects.active = face_mesh
+            bpy.ops.object.mode_set(mode='EDIT')
+
+            bm = bmesh.from_edit_mesh(face_mesh.data)
+            uv_layer = bm.loops.layers.uv.active
+            uv_offset = [(0, 0), (0.5, 0), (0, 0.5), (0.5, 0.5)]  # Predefined UV shifts (Y direction reversed)
+
+            for side in ['L', 'R']:
+                face_mesh.vertex_groups.active = face_mesh.vertex_groups.get(f'J_Adj_{side}_FaceEyeAlt{i}')
+                bpy.ops.mesh.select_all(action='DESELECT')
+                bpy.ops.object.vertex_group_select()
+
+                # Apply UV shift to all selected UVs
+                for face in bm.faces:
+                    if face.select:
+                        for loop in face.loops:
+                            loop[uv_layer].uv.x += uv_offset[i-1][0]
+                            loop[uv_layer].uv.y -= uv_offset[i-1][1]  # Reverse Y direction
+
+                # Deselect vertices after UV adjustment
+                bpy.ops.mesh.select_all(action='DESELECT')
+
+            # Update the mesh
+            bmesh.update_edit_mesh(face_mesh.data)
+
+        # Exit edit mode
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        # Create 4 new bones for each eye based on the existing eye bone positions
+        bpy.context.view_layer.objects.active = armature
+        bpy.ops.object.mode_set(mode='EDIT')
+
+        for side in ['L', 'R']:
+            base_bone_name = f'J_Adj_{side}_FaceEye'
+            base_bone = armature.data.edit_bones.get(base_bone_name)
+
+            if base_bone:
+                for i in range(1, 5):
+                    new_bone_name = f'J_Adj_{side}_FaceEyeAlt{i}'
+                    if new_bone_name not in armature.data.edit_bones:
+                        new_bone = armature.data.edit_bones.new(name=new_bone_name)
+
+                        # Position new bones exactly like the base bone
+                        new_bone.head = base_bone.head
+                        new_bone.tail = base_bone.tail
+                        new_bone.parent = base_bone
+
+        # Exit edit mode
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        # Create 4 new shape keys for iris patterns
+        bpy.context.view_layer.objects.active = face_mesh
+
+        if face_mesh.data.shape_keys is None:
+            bpy.ops.object.shape_key_add(name="Basis", from_mix=False)
+
+        for i in range(1, 5):
+            shape_key_name = f"show_iris_pattern_{i}"
+            shape_key = face_mesh.shape_key_add(name=shape_key_name, from_mix=False)
+
+            # Activate the new shape key
+            face_mesh.active_shape_key_index = len(face_mesh.data.shape_keys.key_blocks) - 1
+
+            # Enter edit mode to manipulate vertices for each shape key
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_all(action='DESELECT')
+
+            # Move vertices for the current shape key
+            for side in ['L', 'R']:
+                group_name = f'J_Adj_{side}_FaceEyeAlt{i}'
+
+                # Activate the correct vertex group for the current shape key
+                vertex_group = face_mesh.vertex_groups.get(group_name)
+                if vertex_group:
+                    face_mesh.vertex_groups.active = vertex_group
+                    bpy.ops.object.vertex_group_select()
+
+                    # Move each shape key forward along Y axis, based on the shape key number
+                    distance = 0.015 * i  # Fixed distance for each shape key
+                    bpy.ops.transform.translate(value=(0, -distance - 0.0004, 0))
+
+                # Deselect the current vertices to avoid selecting them again in the next loop
+                bpy.ops.mesh.select_all(action='DESELECT')
+
+            # Exit edit mode after moving vertices
+            bpy.ops.object.mode_set(mode='OBJECT')
+
+        return {'FINISHED'}
+
+
+
     
 class ExtractGlassesButton(bpy.types.Operator):
     bl_idname = "object.extract_glasses"
@@ -747,6 +980,10 @@ class RunScriptButtonPanel(bpy.types.Panel):
         layout.label(text="Bakin Enhancements", icon='OUTLINER_OB_ARMATURE')
         layout.operator("object.add_item_hooks", icon='EVENT_ONEKEY')
         layout.operator("object.add_head_eye_shape_keys", icon='EVENT_TWOKEY')
+
+        # Button to create alternate irises
+        layout.operator("object.create_alternate_irises", icon='EVENT_FOURKEY')
+
         layout.operator("object.fusion_and_add_bonuses", icon='EVENT_THREEKEY')
         
         
@@ -786,6 +1023,7 @@ def register():
     bpy.utils.register_class(ExtractCatEarsButton)
     bpy.utils.register_class(ExportFBXUnifiedButton)
     bpy.utils.register_class(RunScriptButtonPanel)
+    bpy.utils.register_class(CreateAlternateIrisesButton)  # Register the new button
 
 def unregister():
     bpy.utils.unregister_class(ImportVRMButton)
@@ -796,6 +1034,7 @@ def unregister():
     bpy.utils.unregister_class(ExtractGlassesButton)
     bpy.utils.unregister_class(ExtractRabbitEarsButton)
     bpy.utils.unregister_class(ExtractCatEarsButton)
+    bpy.utils.unregister_class(CreateAlternateIrisesButton)
     bpy.utils.unregister_class(RunScriptButtonPanel)
 
 if __name__ == "__main__":
