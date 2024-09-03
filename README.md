@@ -12,8 +12,21 @@ Works for both VRM 0.0 models and VRM 1.0 models.**
 - *If you wish to animate the VRM models with baked-in hair/bust/outfit physics for your Bakin game, check out this add-on I made: https://github.com/Ingenoire/VRM-Spacing-Animation-Baking*
 
 ### V4.0: Multiple Irises through Blend Shapes added!
+
+| Original Iris | Alternate Iris (#2 in this case) |
+| --- | --- |
+| ![img](https://i.imgur.com/fBlglrl.png) | ![img](https://i.imgur.com/pMgZzgm.png) |
+
 A pretty major feature, you can now load in a new texture that holds up to 4 different irises, and you'll be able to swap the iris textures in Bakin on the fly! This is great for creating more expressive characters through the use of things like heart-shaped eyes, soulless eyes, etc...
->⚠️ Small bug: if you manipulate the shape keys of the model before pressing the button, it will break the code of this for some reason. When adding features to an old model, always make sure to start from a blank blender scene, and re-import the VRM model, and apply all the 
+
+- You'll need to supply a 4096x4096 image texture layed out like the template image here: https://github.com/Ingenoire/bakin-vrm-blender/blob/main/iris_template.png. Use textures from VRoid Studio, upscale them if needed, and place both their iris and highlights in the same way. For best results, in your image editor, display a 1024x1024 grid to make things easier.
+- If you want to do this step, you'll need to do it before merging the meshes.
+- Your model needs to have been exported with a 4096x4096 texture resolution to use (default settings when reducing materials in VRoid Studio). No testing was done with different texture sizes.
+- In Bakin, you'll need to enable the ALTERNATE_IRIS 1 to 4 shape key, ideally without resetting other shape keys, for it to show up.
+
+>⚠️ Bug #1: The highlights of the alternate irises are a bit off, so feel free to place the highlight over the iris in your alternate irises.
+>
+>⚠️ Bug #2: if you manipulate the shape keys of the model before pressing the "Add Alternate Irises" button, it will stack all the irises in the original iris (that's bad). If this happens, make a new blender scene and re-import the VRM, and just press the buttons in order, without fiddling with the shape keys in Blender.
 
 ### Features
 - Simple and straightforward workflow: no need to touch anything Blender related if you don't want to!
