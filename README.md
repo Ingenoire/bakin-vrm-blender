@@ -17,9 +17,10 @@ Works for both VRM 0.0 models and VRM 1.0 models.**
 | --- | --- |
 | ![img](https://i.imgur.com/fBlglrl.png) | ![img](https://i.imgur.com/pMgZzgm.png) |
 
-A pretty major feature, you can now load in a new texture that holds up to 4 different irises, and you'll be able to swap the iris textures in Bakin on the fly! This is great for creating more expressive characters through the use of things like heart-shaped eyes, soulless eyes, etc...
+A pretty major (optional) feature, you can now load in a new texture that holds up to 4 different irises, and you'll be able to swap the iris textures in Bakin on the fly! This is great for creating more expressive characters through the use of things like heart-shaped eyes, soulless eyes, etc...
+Characters need expressions, and it'd be a shame if your character couldn't show more emotion!
 
-- You'll need to supply a 4096x4096 image texture layed out like the template image here: https://github.com/Ingenoire/bakin-vrm-blender/blob/main/iris_template.png. Use textures from VRoid Studio, upscale them if needed, and place both their iris and highlights in the same way. For best results, in your image editor, display a 1024x1024 grid to make things easier.
+- You'll need to supply a 4096x4096 image texture layed out like the template image here: https://github.com/Ingenoire/bakin-vrm-blender/blob/main/iris_template.png. Best to use textures straight out of VRoid Studio by exporting them from there first (edit iris textures), upscale them if needed, and place both their iris and highlights in the same way. For best results, in your image editor, display a 1024x1024 grid to make things easier.
 - If you want to do this step, you'll need to do it before merging the meshes.
 - Your model needs to have been exported with a 4096x4096 texture resolution to use (default settings when reducing materials in VRoid Studio). No testing was done with different texture sizes.
 - In Bakin, you'll need to enable the ALTERNATE_IRIS 1 to 4 shape key, ideally without resetting other shape keys, for it to show up.
@@ -45,6 +46,15 @@ A pretty major feature, you can now load in a new texture that holds up to 4 dif
 - Download the latest release.
 - Open Blender, and under "Edit" -> "Preferences", select "Add-ons". Then go to "Install...", find your downloaded zip file. Make sure to tick the addon box for it to activate (Blender 4.2 automatically activates it though).
 - The addon is set to the right side panel. Press the N key to open the side panel and find the VRoid for Bakin tab.
+
+## Usage
+Assuming you're using a VRoid VRM 1.0 Model with Materials Reduced set to 8, and the texture resolution was left at 4096x4096:
+- Open the Bakin VRM panel, and press Import VRM Model.
+- Click the four buttons from top to bottom in successive order.
+- Save your current blender scene (it's good for animating your model later on too)!
+- Press Export FBX + DEF, and select 8 materials, then export.
+  - If you want more accurate shadows (AKA: no invisible torso) casted or outlines to work, enable the tick box before exporting.
+- Open Bakin, and import the model. The model is located in a new folder created where you saved the blend file.
 
 ### Tip
 ![alt text](https://i.imgur.com/XAvD2cv.png)
