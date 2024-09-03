@@ -309,9 +309,14 @@ class ExportFBXUnifiedButton(bpy.types.Operator):
                 gltf = mat.vrm_addon_extension.mtoon1
                 mtoon = gltf.extensions.vrmc_materials_mtoon
                 outline_width = round(mtoon.outline_width_factor, 3)
+                
+                material_name_upper = mat.name.upper()
 
                 if outline_width > 0:
-                    f.write('drawOutline true\n')
+                    if "EYE_ALTERNATIVE_IRISES" in material_name_upper:
+                        f.write('drawOutline false\n')
+                    else:
+                        f.write('drawOutline true\n')
                 else:
                     f.write('drawOutline false\n')
                     
@@ -330,7 +335,6 @@ class ExportFBXUnifiedButton(bpy.types.Operator):
                 f.write('uvofs 0.000000 0.000000\n')
                 f.write('uvscl 1.000000 1.000000\n')
                 
-                material_name_upper = mat.name.upper()
                 print(f"Processing material: {mat.name}, Single body mesh: {single_body_mesh}")  # Debug statement
 
                 if material_count == '8' or material_count == 'unrestricted':
