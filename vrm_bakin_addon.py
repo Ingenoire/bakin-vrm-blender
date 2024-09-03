@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Bakin VRM",
     "author": "ingenoire",
-    "version": (4, 0),
+    "version": (4, 1),
     "blender": (2, 80, 0),
     "location": "View3D > Tool Shelf > Run Script Button",
     "description": "Adds buttons that create itemhook bones and shape keys for both eye and head movement for VRoid VRM characters, for use with RPG Developer Bakin.",
@@ -798,31 +798,49 @@ class CreateAlternateIrisesButton(bpy.types.Operator):
             # Activate the new shape key
             face_mesh.active_shape_key_index = len(face_mesh.data.shape_keys.key_blocks) - 1
 
-            # Enter edit mode to manipulate vertices for each shape key
+            # Now enter edit mode to use bmesh for vertex manipulation
             bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.mesh.select_all(action='DESELECT')
+            bm = bmesh.from_edit_mesh(face_mesh.data)
 
-            # Move vertices for the current shape key
+            # Process the alternate and original irises in both L and R directions
             for side in ['L', 'R']:
-                group_name = f'J_Adj_{side}_FaceEyeAlt{i}'
+                alt_group_name = f'J_Adj_{side}_FaceEyeAlt{i}'
+                base_group_name = f'J_Adj_{side}_FaceEye'
 
-                # Activate the correct vertex group for the current shape key
-                vertex_group = face_mesh.vertex_groups.get(group_name)
-                if vertex_group:
-                    face_mesh.vertex_groups.active = vertex_group
-                    bpy.ops.object.vertex_group_select()
+                alt_group = face_mesh.vertex_groups.get(alt_group_name)
+                base_group = face_mesh.vertex_groups.get(base_group_name)
 
-                    # Move each shape key forward along Y axis, based on the shape key number
-                    distance = 0.015 * i  # Fixed distance for each shape key
-                    bpy.ops.transform.translate(value=(0, -distance - 0.0004, 0))
+                # If both alternate and base groups exist
+                if alt_group and base_group:
+                    # First, move the alternate iris forward along the Y-axis using bmesh
+                    move_vertices_in_group(bm, face_mesh, alt_group.index, (0, -0.015 * i, 0))
 
-                # Deselect the current vertices to avoid selecting them again in the next loop
-                bpy.ops.mesh.select_all(action='DESELECT')
+                    # Now, move the original iris backward by the same amount (but opposite direction)
+                    move_vertices_in_group(bm, face_mesh, base_group.index, (0, 0.015 * i, 0))
 
-            # Exit edit mode after moving vertices
+            # Update the mesh
+            bmesh.update_edit_mesh(face_mesh.data)
+
+            # Exit edit mode
             bpy.ops.object.mode_set(mode='OBJECT')
 
         return {'FINISHED'}
+
+def move_vertices_in_group(bm, mesh_obj, group_index, translation_vector):
+    """
+    This function translates all vertices belonging to a given vertex group
+    using bmesh for more control over the vertex manipulation.
+    """
+    deform_layer = bm.verts.layers.deform.verify()
+    
+    for vert in bm.verts:
+        # Check if the vertex is in the specified vertex group
+        if group_index in vert[deform_layer]:
+            # Apply the translation to the vertex
+            vert.co.x += translation_vector[0]
+            vert.co.y += translation_vector[1]
+            vert.co.z += translation_vector[2]
+
 
 
 
